@@ -15,7 +15,7 @@ func DrawCollisionGrid(world *collision.CollisionWorld, screen *ebiten.Image, vi
 	path := vector.Path{}
 	grid := world.Grid()
 
-	cells := grid.GetCellsInArea(&viewport)
+	cells := grid.GetCellsInArea(viewport)
 	cellSize := grid.CellSize()
 
 	for cell := range cells {

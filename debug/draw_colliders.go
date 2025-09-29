@@ -10,8 +10,9 @@ import (
 )
 
 func DrawColliders(world *collision.CollisionWorld, screen *ebiten.Image, viewport geom.Rect64, viewMatrix ebiten.GeoM) {
-	for rect := range world.QueryArea(&viewport) {
-		drawRect(screen, rect, viewMatrix)
+	for collider := range world.QueryArea(viewport) {
+		aabb := collider.AABB()
+		drawRect(screen, &aabb, viewMatrix)
 	}
 }
 
