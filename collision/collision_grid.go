@@ -39,7 +39,7 @@ func (g *Grid) Insert(rect *geom.Rect64) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	keys := g.get_grid_keys(rect)
+	keys := g.getGridKeys(rect)
 	for _, key := range keys {
 		if _, ok := g.cells[key]; !ok {
 			g.cells[key] = hashset.New[*geom.Rect64]()
@@ -81,7 +81,7 @@ func (g *Grid) GetCellsInArea(area *geom.Rect64) hashset.Set[GridKey] {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	keys := g.get_grid_keys(area)
+	keys := g.getGridKeys(area)
 	cells := hashset.New[GridKey]()
 
 	for _, key := range keys {
@@ -93,7 +93,7 @@ func (g *Grid) GetCellsInArea(area *geom.Rect64) hashset.Set[GridKey] {
 	return cells
 }
 
-func (g *Grid) get_grid_keys(rect *geom.Rect64) []GridKey {
+func (g *Grid) getGridKeys(rect *geom.Rect64) []GridKey {
 	keys := make([]GridKey, 0)
 
 	minx, miny := rect.Min()

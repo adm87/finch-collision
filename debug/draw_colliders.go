@@ -11,11 +11,11 @@ import (
 
 func DrawColliders(world *collision.CollisionWorld, screen *ebiten.Image, viewport geom.Rect64, viewMatrix ebiten.GeoM) {
 	for rect := range world.QueryArea(&viewport) {
-		draw_rect(screen, rect, viewMatrix)
+		drawRect(screen, rect, viewMatrix)
 	}
 }
 
-func draw_rect(screen *ebiten.Image, rect *geom.Rect64, viewMatrix ebiten.GeoM) {
+func drawRect(screen *ebiten.Image, rect *geom.Rect64, viewMatrix ebiten.GeoM) {
 	rectImg.Fill(color.RGBA{R: 255, A: 255})
 
 	path := vector.Path{}
