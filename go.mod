@@ -3,7 +3,7 @@ module github.com/adm87/finch-collision
 go 1.25.1
 
 require (
-	github.com/adm87/finch-core v0.0.5
+	github.com/adm87/finch-core v0.0.6
 	github.com/hajimehoshi/ebiten/v2 v2.8.8
 )
 
