@@ -8,8 +8,8 @@ import (
 type BoxCollider struct {
 	geom.Rect64
 
-	layerMask          collision.CollisionLayer
 	colliderType       collision.ColliderType
+	collisionLayer     collision.CollisionLayer
 	collisionDetection collision.CollisionDetectionType
 }
 
@@ -21,9 +21,9 @@ func NewBoxCollider(x, y, width, height float64) *BoxCollider {
 			Width:  width,
 			Height: height,
 		},
-		layerMask:          collision.NoCollisionLayers,
 		colliderType:       collision.ColliderStatic,
 		collisionDetection: collision.CollisionDetectionDiscrete,
+		collisionLayer:     0,
 	}
 }
 
@@ -35,16 +35,12 @@ func (b *BoxCollider) Shape() any {
 	return b.Rect64
 }
 
-func (b *BoxCollider) AddToLayer(layer collision.CollisionLayer) {
-	b.layerMask.AddLayer(layer)
+func (b *BoxCollider) Layer() collision.CollisionLayer {
+	return b.collisionLayer
 }
 
-func (b *BoxCollider) RemoveFromLayer(layer collision.CollisionLayer) {
-	b.layerMask.RemoveLayer(layer)
-}
-
-func (b *BoxCollider) LayerMask() collision.CollisionLayer {
-	return b.layerMask
+func (b *BoxCollider) SetLayer(layer collision.CollisionLayer) {
+	b.collisionLayer = layer
 }
 
 func (b *BoxCollider) Type() collision.ColliderType {

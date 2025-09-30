@@ -1,6 +1,8 @@
 package collision
 
 import (
+	"maps"
+
 	"github.com/adm87/finch-core/fsys"
 	"github.com/adm87/finch-core/geom"
 	"github.com/adm87/finch-core/hashset"
@@ -20,49 +22,29 @@ type ContactInfo struct {
 	Depth     float64
 }
 
-type CollisionHandler interface {
-	OnCollision(contact *ContactInfo)
-}
-
-type CollisionPair struct {
-	A Collider
-	B Collider
-}
-
-func (c CollisionPair) Equals(other CollisionPair) bool {
-	return (c.A == other.A && c.B == other.B) || (c.A == other.B && c.B == other.A)
-}
-
-func (c CollisionPair) Has(collider Collider) bool {
-	return c.A == collider || c.B == collider
-}
-
 type CollisionWorld struct {
-	handlers         map[CollisionLayer][]CollisionHandler
+	profiles         CollisionProfile
+	grid             *Grid
 	dynamicTracking  map[Collider]geom.Point64
 	dynamicColliders hashset.Set[Collider]
 	colliders        hashset.Set[Collider]
-	grid             *Grid
 }
 
 func NewCollisionWorld(cellSize float64) *CollisionWorld {
 	return &CollisionWorld{
-		handlers:         make(map[CollisionLayer][]CollisionHandler),
+		profiles:         make(CollisionProfile),
+		grid:             NewGrid(cellSize),
 		dynamicTracking:  make(map[Collider]geom.Point64),
 		dynamicColliders: hashset.New[Collider](),
 		colliders:        hashset.New[Collider](),
-		grid:             NewGrid(cellSize),
 	}
 }
 
-// RegisterHandlers associates the given handlers with the specified collision mask.
-//
-// The execute order of handlers is determined by the order they were registered.
-func (c *CollisionWorld) RegisterHandlers(mask CollisionLayer, handlers ...CollisionHandler) {
-	if _, exists := c.handlers[mask]; !exists {
-		c.handlers[mask] = make([]CollisionHandler, 0)
+func (c *CollisionWorld) AddCollisionRules(layer CollisionLayer, rules CollisionRules) {
+	if c.profiles[layer] == nil {
+		c.profiles[layer] = make(CollisionRules)
 	}
-	c.handlers[mask] = append(c.handlers[mask], handlers...)
+	maps.Copy(c.profiles[layer], rules)
 }
 
 func (c *CollisionWorld) AddCollider(collider Collider) {
@@ -138,9 +120,11 @@ func (c *CollisionWorld) Grid() *Grid {
 }
 
 func (c *CollisionWorld) CheckForCollisions(dt float64) {
-	// Only dynamic colliders can initiate collisions
 	for colliderA := range c.dynamicColliders {
-		if colliderA.LayerMask() == 0 {
+		layerA := colliderA.Layer()
+
+		// Skip if there is no collision profile for the layer this collider is on
+		if !c.profiles.HasProfile(layerA) {
 			continue
 		}
 
@@ -157,16 +141,16 @@ func (c *CollisionWorld) CheckForCollisions(dt float64) {
 		}
 
 		others := c.QueryArea(queryArea)
-		if len(others) == 0 {
+		if len(others) == 0 || (len(others) == 1 && others.Contains(colliderA)) {
 			continue
 		}
+		others.Remove(colliderA)
 
-		mask := colliderA.LayerMask()
 		for other := range others {
-			if other == colliderA {
-				continue
-			}
-			if other.LayerMask()&mask == 0 {
+			layerB := other.Layer()
+
+			// Skip if there is no collision rule for the initiating collider's layer against the other collider's layer
+			if !c.profiles[layerA].HasRule(layerB) {
 				continue
 			}
 
@@ -186,13 +170,7 @@ func (c *CollisionWorld) CheckForCollisions(dt float64) {
 			contact.ColliderA = colliderA
 			contact.ColliderB = other
 
-			key := mask | other.LayerMask()
-
-			if handlers, exists := c.handlers[key]; exists {
-				for _, handler := range handlers {
-					handler.OnCollision(contact)
-				}
-			}
+			c.profiles[layerA][layerB](contact)
 		}
 
 		if colliderA.Type() == ColliderDynamic {
