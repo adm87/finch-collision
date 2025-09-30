@@ -93,8 +93,25 @@ func (c *CollisionWorld) RemoveCollider(collider Collider) {
 
 func (c *CollisionWorld) UpdateCollider(collider Collider) {
 	if !c.colliders.Contains(collider) {
+		// If the collider is not in the system, make sure it isn't being tracked
+		c.grid.Remove(collider)
+		if collider.Type() == ColliderDynamic {
+			delete(c.dynamicTracking, collider)
+			delete(c.dynamicColliders, collider)
+		}
 		return
 	}
+
+	// Handle changes in collider type
+	if collider.Type() == ColliderDynamic && !c.dynamicColliders.Contains(collider) {
+		c.dynamicColliders.AddDistinct(collider)
+		c.dynamicTracking[collider] = geom.NewPoint64(collider.AABB().X, collider.AABB().Y)
+	} else if collider.Type() == ColliderStatic && c.dynamicColliders.Contains(collider) {
+		delete(c.dynamicColliders, collider)
+		delete(c.dynamicTracking, collider)
+	}
+
+	// Reinsert the collider into the spatial grid
 	c.grid.Reinsert(collider)
 }
 
@@ -121,8 +138,9 @@ func (c *CollisionWorld) Grid() *Grid {
 }
 
 func (c *CollisionWorld) CheckForCollisions(dt float64) {
-	for colliderA := range c.colliders {
-		if colliderA.LayerMask() == 0 || colliderA.Type() == ColliderStatic {
+	// Only dynamic colliders can initiate collisions
+	for colliderA := range c.dynamicColliders {
+		if colliderA.LayerMask() == 0 {
 			continue
 		}
 
@@ -258,7 +276,6 @@ func (c *CollisionWorld) detectSweptCollision(collider, other Collider) (*Contac
 			Width:  currentAABB.Width,
 			Height: currentAABB.Height,
 		}
-
 		if contact, collided := c.detectCollision(testAABB, otherAABB); collided {
 			return contact, true
 		}
