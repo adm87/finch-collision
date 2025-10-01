@@ -129,7 +129,7 @@ func (c *CollisionWorld) CheckForCollisions(dt float64) {
 		}
 
 		queryArea := colliderA.AABB()
-		if colliderA.CollisionDetection() == CollisionDetectionContinuous {
+		if colliderA.DetectionType() == CollisionDetectionContinuous {
 			if prevPos, exists := c.dynamicTracking[colliderA]; exists {
 				currentAABB := colliderA.AABB()
 				minX := min(prevPos.X, currentAABB.X)
@@ -157,7 +157,7 @@ func (c *CollisionWorld) CheckForCollisions(dt float64) {
 			var contact *ContactInfo
 			var collided bool
 
-			if colliderA.CollisionDetection() == CollisionDetectionContinuous {
+			if colliderA.DetectionType() == CollisionDetectionContinuous {
 				contact, collided = c.detectSweptCollision(colliderA, other)
 			} else {
 				contact, collided = c.detectCollision(colliderA.AABB(), other.AABB())

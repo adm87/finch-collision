@@ -51,10 +51,10 @@ func (b *BoxCollider) SetType(colliderType collision.ColliderType) {
 	b.colliderType = colliderType
 }
 
-func (b *BoxCollider) CollisionDetection() collision.CollisionDetectionType {
+func (b *BoxCollider) DetectionType() collision.CollisionDetectionType {
 	return b.collisionDetection
 }
 
-func (b *BoxCollider) SetCollisionDetection(collisionDetectionType collision.CollisionDetectionType) {
-	b.collisionDetection = collisionDetectionType
+func (b *BoxCollider) SetDetectionType(detectionType collision.CollisionDetectionType) {
+	b.collisionDetection = detectionType
 }

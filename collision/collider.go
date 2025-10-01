@@ -11,6 +11,6 @@ type Collider interface {
 	Type() ColliderType
 	SetType(colliderType ColliderType)
 
-	CollisionDetection() CollisionDetectionType
-	SetCollisionDetection(collisionDetectionType CollisionDetectionType)
+	DetectionType() CollisionDetectionType
+	SetDetectionType(detectionType CollisionDetectionType)
 }
