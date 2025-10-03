@@ -1,8 +1,6 @@
 package collision
 
 import (
-	"maps"
-
 	"github.com/adm87/finch-core/fsys"
 	"github.com/adm87/finch-core/geom"
 	"github.com/adm87/finch-core/hashset"
@@ -40,11 +38,8 @@ func NewCollisionWorld(cellSize float64) *CollisionWorld {
 	}
 }
 
-func (c *CollisionWorld) AddCollisionRules(layer CollisionLayer, rules CollisionRules) {
-	if c.profiles[layer] == nil {
-		c.profiles[layer] = make(CollisionRules)
-	}
-	maps.Copy(c.profiles[layer], rules)
+func (c *CollisionWorld) SetProfiles(profiles CollisionProfile) {
+	c.profiles = profiles
 }
 
 func (c *CollisionWorld) AddCollider(collider Collider) {
@@ -230,22 +225,18 @@ func (c *CollisionWorld) detectSweptCollision(collider, other Collider) (*Contac
 	currentAABB := collider.AABB()
 	otherAABB := other.AABB()
 
-	delta := geom.NewPoint64(
-		currentAABB.X-prevPos.X,
-		currentAABB.Y-prevPos.Y,
-	)
+	currentPosition := geom.NewPoint64(currentAABB.X, currentAABB.Y)
+	movement := currentPosition.Sub(prevPos)
+	distance := movement.Length()
 
 	// If no movement, just do regular collision detection
-	if delta.Length() < MinMovementThreshold {
+	if distance < MinMovementThreshold {
 		return c.detectCollision(currentAABB, otherAABB)
 	}
 
-	distance := delta.Length()
-
 	stepSize := min(currentAABB.Width, currentAABB.Height) * SweptCollisionStepFactor
 	steps := fsys.Clamp(int(distance/stepSize)+1, MinSweptCollisionSteps, MaxSweptCollisionSteps)
-
-	stepVector := delta.Div(float64(steps))
+	stepVector := movement.Div(float64(steps))
 
 	for i := 0; i <= steps; i++ {
 		testAABB := geom.Rect64{
